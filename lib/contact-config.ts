@@ -36,7 +36,7 @@ export type ContactConfigRecord = {
   emails: ContactEmailRecord[];
 };
 
-const defaultContactConfig = {
+export const defaultContactConfig = {
   companyName: "SSG Pharma",
   businessType: "Pharmaceutical Wholesaler",
   officeAddress: "B-28, SUSHANT VYAPAR KENDER, Sushant Lok Phase 1",
@@ -50,7 +50,7 @@ const defaultContactConfig = {
   businessDaysSun: false,
 } as const;
 
-const defaultPhones = [
+export const defaultPhones = [
   {
     value: "+91 93554 74600",
     purpose: "procurement",
@@ -74,7 +74,7 @@ const defaultPhones = [
   },
 ] as const;
 
-const defaultEmails = [
+export const defaultEmails = [
   {
     value: "SSGPHARMAONLINE@GMAIL.COM",
     type: "general",
@@ -90,6 +90,27 @@ const defaultEmails = [
     priority: 100,
   },
 ] as const;
+
+export const defaultPublicContactConfig: ContactConfigRecord = {
+  id: "default-contact-config",
+  ...defaultContactConfig,
+  phones: defaultPhones.map((phone, index) => ({
+    id: `default-phone-${index + 1}`,
+    value: phone.value,
+    purpose: phone.purpose,
+    description: phone.description,
+    isActive: phone.isActive,
+    priority: phone.priority,
+  })),
+  emails: defaultEmails.map((email, index) => ({
+    id: `default-email-${index + 1}`,
+    value: email.value.toLowerCase(),
+    type: email.type,
+    description: email.description,
+    isActive: email.isActive,
+    priority: email.priority,
+  })),
+};
 
 export const ensureContactConfig = cache(async function ensureContactConfig() {
   let config = await prisma.contactConfig.findFirst();
