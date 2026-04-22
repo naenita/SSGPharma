@@ -13,7 +13,16 @@ import {
 } from "@/components/ui/dropdown-menu"
 
 export function ThemeToggle() {
+  const [mounted, setMounted] = React.useState(false)
   const { setTheme } = useTheme()
+
+  React.useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) {
+    return <div aria-hidden className="size-9 rounded-md border border-border bg-background" />
+  }
 
   return (
     <DropdownMenu>
