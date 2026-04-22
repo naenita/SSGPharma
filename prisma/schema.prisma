@@ -1,0 +1,189 @@
+// SQLite keeps local dev simple; swap DATABASE_URL for Postgres in production.
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Product {
+  id                    String   @id @default(cuid())
+  name                  String
+  slug                  String   @unique
+  categoryId            String?
+  category              Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  manufacturer          String?
+  isActive              Boolean  @default(true)
+  
+  // Pricing and Packaging
+  pricePaise            Int      // Store in paise (1 INR = 100 paise)
+  mrpPaise              Int?     // MRP in paise
+  dosage                String?  // e.g. "100mg"
+  packSize              String?  // e.g. "30 tablets"
+  salts                 String?  // comma-separated or single molecule reference
+  
+  // Product Details
+  description           String?
+  keyBenefits           String?
+  goodToKnow            String?
+  dietType              String?  // Vegetarian, Vegan, Non-Vegetarian
+  productForm           String?  // Tablet, Capsule, Powder, Liquid
+  allergiesInformation  String?
+  directionForUse       String?
+  safetyInformation     String?
+  schema                String?  // Technical schema info
+  specialBenefitSchemes String? // Newline-separated schemes (e.g. "1+1 Free vial Scheme\n1+2 Free Vial Scheme")
+  faqs                  String?  // FAQs text
+  
+  // Images (up to 3)
+  imageUrl1             String?
+  imageUrl2             String?
+  imageUrl3             String?
+  
+  // Relations
+  molecules             ProductMolecule[]
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  @@index([categoryId])
+  @@index([slug])
+}
+
+model Molecule {
+  id                String   @id @default(cuid())
+  name              String
+  slug              String   @unique
+  synonyms          String?  // comma-separated alternative names
+  imageUrl          String?
+  isPublished       Boolean  @default(true)
+  
+  // Content
+  overview          String?
+  backgroundAndApproval String?
+  uses              String?
+  administration    String?
+  sideEffects       String?
+  warnings          String?
+  precautions       String?
+  expertTips        String?
+  faqs              String?
+  references        String?
+  
+  // Relations
+  products          ProductMolecule[]
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@index([slug])
+  @@index([isPublished])
+}
+
+model ProductMolecule {
+  id                String   @id @default(cuid())
+  productId         String
+  product           Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  moleculeId        String
+  molecule          Molecule @relation(fields: [moleculeId], references: [id], onDelete: Cascade)
+  quantity          String?  // e.g. "100mg"
+  
+  @@unique([productId, moleculeId])
+  @@index([productId])
+  @@index([moleculeId])
+}
+
+model Category {
+  id                String   @id @default(cuid())
+  name              String   @unique
+  slug              String   @unique
+  description       String?
+  isActive          Boolean  @default(true)
+  
+  // Relations
+  products          Product[]
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model AdminUser {
+  id             String   @id @default(cuid())
+  email          String   @unique
+  name           String
+  passwordHash   String
+  isActive       Boolean  @default(true)
+  role           String   @default("admin") // "admin", "superadmin", etc.
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model ContactConfig {
+  id             String   @id @default(cuid())
+  companyName    String   @default("SSG Pharma")
+  businessType   String   @default("Pharmaceutical Wholesaler")
+  officeAddress  String?
+  officeCity     String?
+  officeState    String?
+  officeZipCode  String?
+  businessHoursStart String? @default("09:00") // 24-hour format
+  businessHoursEnd   String? @default("18:00")
+  businessDaysMonFri Boolean @default(true)
+  businessDaysSat    Boolean @default(true)
+  businessDaysSun    Boolean @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  // Relations
+  phones         ContactPhone[]
+  emails         ContactEmail[]
+}
+
+model ContactPhone {
+  id             String   @id @default(cuid())
+  configId       String
+  config         ContactConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
+  value          String   // e.g. "+91 9355474600"
+  purpose        String   // "sales", "support", "procurement", "emergency"
+  description    String?  // e.g. "Neelam - Procurement Desk"
+  isActive       Boolean  @default(true)
+  priority       Int      @default(0) // Higher = used first for this purpose
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  @@index([configId])
+  @@index([purpose])
+}
+
+model ContactEmail {
+  id             String   @id @default(cuid())
+  configId       String
+  config         ContactConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
+  value          String   // e.g. "sales@example.com"
+  type           String   // "general", "procurement", "support", "sales", "inquiry_recipient"
+  description    String?
+  isActive       Boolean  @default(true)
+  priority       Int      @default(0) // Higher = used first for this type
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  @@index([configId])
+  @@index([type])
+}
+
+model Inquiry {
+  id             String   @id @default(cuid())
+  name           String
+  email          String
+  phone          String?
+  message        String
+  inquiryType    String   @default("general") // "quote", "general", "procurement"
+  status         String   @default("new") // "new", "responded", "archived"
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  @@index([status])
+  @@index([createdAt])
+}

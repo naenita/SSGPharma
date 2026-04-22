@@ -7,7 +7,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
+  --font-sans: var(--font-sans-body), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -49,14 +49,18 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
+  --font-sans-body: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --font-display: Georgia, "Times New Roman", serif;
+  --font-geist-mono: "SFMono-Regular", "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+  --background: oklch(0.99 0.004 200);
+  --foreground: oklch(0.18 0.02 255);
+  --card: oklch(1 0.006 200);
+  --card-foreground: oklch(0.18 0.02 255);
+  --popover: oklch(1 0.006 200);
+  --popover-foreground: oklch(0.18 0.02 255);
+  /* deep teal — reads “clinical” without looking like every violet AI landing page */
+  --primary: oklch(0.42 0.11 195);
+  --primary-foreground: oklch(0.985 0.01 200);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
@@ -64,8 +68,8 @@
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
+  --border: oklch(0.86 0.012 220);
+  --input: oklch(0.88 0.01 220);
   --ring: oklch(0.708 0 0);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
@@ -84,14 +88,14 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
+  --background: oklch(0.14 0.02 255);
+  --foreground: oklch(0.96 0.01 200);
+  --card: oklch(0.18 0.025 255);
+  --card-foreground: oklch(0.96 0.01 200);
+  --popover: oklch(0.18 0.025 255);
+  --popover-foreground: oklch(0.96 0.01 200);
+  --primary: oklch(0.72 0.12 195);
+  --primary-foreground: oklch(0.16 0.03 255);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
@@ -99,8 +103,8 @@
   --accent: oklch(0.269 0 0);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
+  --border: oklch(0.38 0.02 255);
+  --input: oklch(0.34 0.02 255);
   --ring: oklch(0.556 0 0);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
@@ -126,5 +130,17 @@
   }
   html {
     @apply font-sans;
+  }
+  h1 {
+    @apply -tracking-[0.02em];
+  }
+  h2 {
+    @apply -tracking-[0.01em];
+  }
+  h3, h4, h5, h6 {
+    @apply -tracking-[0.005em];
+  }
+  p {
+    @apply leading-[1.6];
   }
 }
