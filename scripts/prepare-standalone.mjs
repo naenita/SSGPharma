@@ -5,6 +5,8 @@ const rootDir = process.cwd();
 const nextDir = path.join(rootDir, ".next");
 const standaloneDir = path.join(nextDir, "standalone");
 const standaloneNextDir = path.join(standaloneDir, ".next");
+const serverSourceDir = path.join(nextDir, "server");
+const serverTargetDir = path.join(standaloneNextDir, "server");
 const staticSourceDir = path.join(nextDir, "static");
 const staticTargetDir = path.join(standaloneNextDir, "static");
 const publicSourceDir = path.join(rootDir, "public");
@@ -31,9 +33,10 @@ function copyFileIfPresent(sourceFile, targetFile) {
   cpSync(sourceFile, targetFile, { force: true });
 }
 
+copyDirIfPresent(serverSourceDir, serverTargetDir);
 copyDirIfPresent(staticSourceDir, staticTargetDir);
 copyDirIfPresent(publicSourceDir, publicTargetDir);
 copyFileIfPresent(sqliteSourceFile, sqliteRootTargetFile);
 copyFileIfPresent(sqliteSourceFile, sqlitePrismaTargetFile);
 
-console.log("Prepared standalone output with static assets, public files, and SQLite data.");
+console.log("Prepared standalone output with Next server files, static assets, public files, and SQLite data.");
