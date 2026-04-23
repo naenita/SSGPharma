@@ -29,6 +29,7 @@ echo "=== Running database migrations ==="
 pnpm prisma migrate deploy
 
 echo "=== Building for production ==="
+export NEXT_DEPLOYMENT_ID="${NEXT_DEPLOYMENT_ID:-$(git rev-parse --short HEAD)-$(date +%s)}"
 pnpm build:standalone
 
 echo "=== Starting application with PM2 ==="

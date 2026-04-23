@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   compress: true,
   assetPrefix: process.env.NEXT_PUBLIC_ASSET_PREFIX ?? "",
+  deploymentId: process.env.NEXT_DEPLOYMENT_ID,
   images: {
     formats: ["image/avif", "image/webp"],
     minimumCacheTTL: 86400,
