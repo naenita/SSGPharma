@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-APP_DIR="/var/www/app"
+APP_DIR="${APP_DIR:-/var/www/app}"
 REPO_URL="${REPO_URL:-}"  # set via: REPO_URL=https://github.com/you/repo.git bash deploy/first-deploy.sh
 
 if [ -z "$REPO_URL" ]; then
@@ -17,7 +17,7 @@ cd "$APP_DIR"
 echo "=== Copying environment file ==="
 if [ ! -f .env ]; then
   cp .env.example .env
-  echo "IMPORTANT: Edit /var/www/app/.env with your production values before continuing."
+  echo "IMPORTANT: Edit $APP_DIR/.env with your production values before continuing."
   echo "Press Enter when done..."
   read
 fi

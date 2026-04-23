@@ -13,10 +13,10 @@
    ```
 4. Edit production environment variables:
    ```bash
-   nano /var/www/app/.env
+   nano .env
    ```
    Required variables:
-   - `DATABASE_URL` — path to SQLite file, e.g. `file:/var/www/app/data/prod.db`
+   - `DATABASE_URL` — absolute path to SQLite file, e.g. `file:/home/ubuntu/ssg-pharma/data/prod.db`
    - `NEXT_PUBLIC_SITE_URL` — your domain, e.g. `https://yourdomain.com`
    - `ADMIN_SESSION_SECRET` — random 32+ char string
    - `NODE_ENV=production`
@@ -30,22 +30,22 @@
 
 Push to GitHub, then on the server:
 ```bash
-bash /var/www/app/deploy/deploy.sh
+cd /home/ubuntu/ssg-pharma && bash deploy/deploy.sh
 ```
 
 ## After Deploy Health Check
 ```bash
-APP_URL=https://yourdomain.com bash /var/www/app/deploy/check-health.sh
+APP_URL=https://yourdomain.com bash deploy/check-health.sh
 ```
 
 ## If CSS/JS Breaks After Build
 ```bash
-cd /var/www/app && node scripts/standalone-setup.mjs && pm2 restart nextapp
+cd /home/ubuntu/ssg-pharma && node scripts/standalone-setup.mjs && pm2 restart nextapp
 ```
 
 ## Reset Admin Password
 ```bash
-bash /var/www/app/deploy/reset-admin-password.sh
+cd /home/ubuntu/ssg-pharma && bash deploy/reset-admin-password.sh
 ```
 
 ## Logs

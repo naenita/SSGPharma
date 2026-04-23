@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-APP_DIR="/var/www/app"
+APP_DIR="${APP_DIR:-$(pwd)}"
 cd "$APP_DIR"
 
 echo "=== Pulling latest code ==="
