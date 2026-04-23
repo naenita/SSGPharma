@@ -60,6 +60,28 @@ What this does:
 6. Issues SSL certs and verifies renewal.
 7. Runs health checks.
 
+## React 418 / Chunk 404 Recovery (Deterministic)
+
+If you see `Minified React error #418` with `/_next/...js 404`, run:
+
+```bash
+cd /var/www/app
+APP_URL=https://ssgpharma.com APP_PORT=5050 bash deploy/recover-clean-build.sh
+```
+
+This script performs:
+- runtime inspection (`.env` and Nginx `_next` path sanity),
+- full `.next` cleanup,
+- clean standalone rebuild,
+- PM2 reload,
+- Nginx reload and strict health checks.
+
+### Runtime inspection only
+```bash
+cd /var/www/app
+STRICT_NGINX_CHECK=1 bash deploy/inspect-runtime.sh
+```
+
 ## Alternative Manual First Deploy
 
 If you prefer step-by-step:
@@ -108,8 +130,7 @@ bash deploy/reset-admin-password.sh
 ### If static assets break after deploy
 ```bash
 cd /var/www/app
-node scripts/standalone-setup.mjs
-APP_PORT=5050 pm2 startOrReload deploy/ecosystem.config.cjs --env production
+APP_URL=https://ssgpharma.com APP_PORT=5050 bash deploy/recover-clean-build.sh
 ```
 
 ## Rollback (Quick)
@@ -130,3 +151,4 @@ APP_PORT=5050 pm2 startOrReload deploy/ecosystem.config.cjs --env production
 - certbot fails: verify DNS propagation and that port 80 is open.
 - app down but nginx up: check `pm2 logs nextapp`.
 - DB errors: verify `.env` `DATABASE_URL` uses absolute server path.
+- `/_next/_next/...` URLs: check `.env` does not set `NEXT_PUBLIC_ASSET_PREFIX=/_next`.

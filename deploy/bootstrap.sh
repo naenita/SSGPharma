@@ -33,6 +33,7 @@ fi
 
 echo "=== Bootstrap: Nginx setup ==="
 DOMAIN="$DOMAIN" WWW_DOMAIN="$WWW_DOMAIN" APP_PORT="$APP_PORT" bash "$APP_DIR/deploy/setup-nginx.sh"
+STRICT_NGINX_CHECK=1 bash "$APP_DIR/deploy/inspect-runtime.sh"
 
 echo "=== Bootstrap: SSL setup ==="
 if [ -z "$CERTBOT_EMAIL" ]; then
