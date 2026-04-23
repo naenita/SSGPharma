@@ -7,6 +7,9 @@ DOMAIN="${DOMAIN:-ssgpharma.com}"
 WWW_DOMAIN="${WWW_DOMAIN:-www.ssgpharma.com}"
 APP_PORT="${APP_PORT:-5050}"
 CERTBOT_EMAIL="${CERTBOT_EMAIL:-}"
+DATABASE_URL="${DATABASE_URL:-file:/var/www/app/data/prod.db}"
+ADMIN_PASSWORD="${ADMIN_PASSWORD:-}"
+ADMIN_SESSION_SECRET="${ADMIN_SESSION_SECRET:-}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -15,7 +18,8 @@ bash "$SCRIPT_DIR/setup-lightsail.sh"
 
 if [ -d "$APP_DIR/.git" ]; then
   echo "=== Existing app repository detected at ${APP_DIR}; running deploy update ==="
-  APP_DIR="$APP_DIR" APP_PORT="$APP_PORT" bash "$APP_DIR/deploy/deploy.sh"
+  APP_DIR="$APP_DIR" APP_PORT="$APP_PORT" DOMAIN="$DOMAIN" DATABASE_URL="$DATABASE_URL" ADMIN_PASSWORD="$ADMIN_PASSWORD" ADMIN_SESSION_SECRET="$ADMIN_SESSION_SECRET" \
+    bash "$APP_DIR/deploy/deploy.sh"
 else
   if [ -z "$REPO_URL" ]; then
     echo "ERROR: REPO_URL is required when ${APP_DIR} is not initialized."
@@ -23,7 +27,8 @@ else
     exit 1
   fi
   echo "=== Fresh app setup; cloning and deploying repository ==="
-  APP_DIR="$APP_DIR" REPO_URL="$REPO_URL" APP_PORT="$APP_PORT" bash "$SCRIPT_DIR/first-deploy.sh"
+  APP_DIR="$APP_DIR" REPO_URL="$REPO_URL" APP_PORT="$APP_PORT" DOMAIN="$DOMAIN" DATABASE_URL="$DATABASE_URL" ADMIN_PASSWORD="$ADMIN_PASSWORD" ADMIN_SESSION_SECRET="$ADMIN_SESSION_SECRET" \
+    bash "$SCRIPT_DIR/first-deploy.sh"
 fi
 
 echo "=== Bootstrap: Nginx setup ==="

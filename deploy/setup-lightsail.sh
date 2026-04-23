@@ -20,7 +20,17 @@ curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt-get install -y nodejs
 
 echo "=== Installing pnpm and PM2 ==="
-sudo npm install -g pnpm pm2
+if command -v pnpm >/dev/null 2>&1; then
+  echo "pnpm already installed at $(command -v pnpm); skipping install."
+else
+  sudo npm install -g pnpm
+fi
+
+if command -v pm2 >/dev/null 2>&1; then
+  echo "pm2 already installed at $(command -v pm2); skipping install."
+else
+  sudo npm install -g pm2
+fi
 
 echo "=== Creating app directories ==="
 sudo mkdir -p "$APP_DIR" "$APP_DATA_DIR"

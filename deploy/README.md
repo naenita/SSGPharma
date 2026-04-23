@@ -23,33 +23,37 @@ Before running scripts:
 - App listen port: `5050` (`127.0.0.1:5050`)
 - SSL: `certbot` (nginx plugin)
 
-## Required Environment Variables (`.env`)
+## `.env` Is Auto-Created
 
-Use production values:
+You do not need to manually create `.env` anymore.  
+`deploy/create-env.sh` auto-generates a production `.env` (including secure random secrets) on first run.
+
+Defaults:
 
 - `NODE_ENV=production`
-- `DATABASE_URL=file:/var/www/app/data/prod.db`
 - `NEXT_PUBLIC_SITE_URL=https://ssgpharma.com`
-- `ADMIN_SESSION_SECRET=<strong random 32+ chars>`
-- `ADMIN_PASSWORD=<optional bootstrap password>`
-- Optional:
-  - `NEXT_PUBLIC_ASSET_PREFIX=`
-  - `NEXT_DEPLOYMENT_ID=`
-  - `NEXT_PUBLIC_GA_ID=`
+- `DATABASE_URL=file:/var/www/app/data/prod.db`
+- `PORT=5050`
+- Random `ADMIN_SESSION_SECRET`
+- Random `ADMIN_PASSWORD` (printed once if not provided)
+
+Override any value by passing environment variables to bootstrap/deploy commands.
 
 ## One-Command First-Time Bootstrap (Recommended)
 
 On the server:
 
 ```bash
-git clone <your-github-repo-url> /var/www/bootstrap
-cd /var/www/bootstrap
-REPO_URL=<your-github-repo-url> CERTBOT_EMAIL=<your-email> bash deploy/bootstrap.sh
+sudo mkdir -p /var/www/app
+sudo chown -R $USER:$USER /var/www/app
+git clone <your-github-repo-url> /var/www/app
+cd /var/www/app
+CERTBOT_EMAIL=<your-email> bash deploy/bootstrap.sh
 ```
 
 What this does:
 1. Installs system dependencies (Node 20, pnpm, pm2, nginx, certbot).
-2. Clones app to `/var/www/app` and deploys it.
+2. Creates `.env` automatically and deploys app.
 3. Builds standalone Next.js output.
 4. Starts/reloads PM2 app on port `5050`.
 5. Configures nginx for `ssgpharma.com` and `www.ssgpharma.com` (www redirects to root).
@@ -77,6 +81,8 @@ cd /var/www/app
 bash deploy/deploy.sh
 APP_URL=https://ssgpharma.com APP_PORT=5050 bash deploy/check-health.sh
 ```
+
+If this is a brand-new server and `.env` does not exist, deploy will auto-create it.
 
 ## Useful Operations
 
