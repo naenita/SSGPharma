@@ -33,8 +33,8 @@ Why runtime migrations matter:
 - Region: `singapore`
 - Build command: `pnpm install --frozen-lockfile && pnpm build:standalone`
 - Start command: `pnpm start:render`
-- Persistent disk mount: `/var/data`
-- SQLite path: `file:/var/data/prod.db`
+- Persistent disk mount: `/opt/render/project/src/data`
+- SQLite path: `file:/opt/render/project/src/data/prod.db`
 
 ## If you prefer manual service creation instead of Blueprint
 
@@ -47,13 +47,14 @@ Create a **Web Service** with these values:
 
 Attach a persistent disk:
 
-- Mount path: `/var/data`
+- Mount path: `/opt/render/project/src/data`
+- Size: `5 GB`
 
 Set these environment variables:
 
 ```env
 NODE_ENV=production
-DATABASE_URL=file:/var/data/prod.db
+DATABASE_URL=file:/opt/render/project/src/data/prod.db
 NEXT_PUBLIC_SITE_URL=https://yourdomain.com
 ADMIN_SESSION_SECRET=<random-secret>
 ADMIN_PASSWORD=<your-initial-admin-password>
@@ -77,8 +78,8 @@ After the app is live on its `onrender.com` URL:
 Check:
 
 - the service has a persistent disk attached
-- the disk mount path is exactly `/var/data`
-- `DATABASE_URL=file:/var/data/prod.db`
+- the disk mount path is exactly `/opt/render/project/src/data`
+- `DATABASE_URL=file:/opt/render/project/src/data/prod.db`
 
 ### Admin login fails on a fresh deploy
 

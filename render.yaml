@@ -10,12 +10,13 @@ services:
     autoDeployTrigger: commit
     disk:
       name: medipro-data
-      mountPath: /var/data
+      mountPath: /opt/render/project/src/data
+      sizeGB: 5
     envVars:
       - key: NODE_ENV
         value: production
       - key: DATABASE_URL
-        value: file:/var/data/prod.db
+        value: file:/opt/render/project/src/data/prod.db
       - key: NEXT_PUBLIC_SITE_URL
         sync: false
       - key: ADMIN_SESSION_SECRET
