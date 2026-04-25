@@ -7,6 +7,7 @@ import { TestimonialsSection } from "@/components/marketing/testimonials";
 import { buttonVariants } from "@/components/ui/button";
 import { productDivisions } from "@/lib/divisions";
 import { marketingImages } from "@/lib/marketing-images";
+import { prisma } from "@/lib/prisma";
 import { getSiteUrl } from "@/lib/site-url";
 import { cn } from "@/lib/utils";
 
@@ -39,7 +40,20 @@ const pillars = [
   },
 ];
 
-export default function HomePage() {
+async function getHomePageStats() {
+  try {
+    const productCount = await prisma.product.count({
+      where: { isActive: true },
+    });
+
+    return { productCount };
+  } catch {
+    return { productCount: 0 };
+  }
+}
+
+export default async function HomePage() {
+  const { productCount } = await getHomePageStats();
   const organizationJsonLd = {
     "@context": "https://schema.org",
     "@type": "Organization",
@@ -53,7 +67,7 @@ export default function HomePage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }} />
       <Hero />
 
-      <StatsSection />
+      <StatsSection productCount={productCount} />
 
       <section className="w-full border-b border-border/40 bg-background py-16 md:py-24">
         <div className="mx-auto grid max-w-[1400px] gap-12 px-4 md:grid-cols-2 md:items-center md:gap-16 md:px-8">

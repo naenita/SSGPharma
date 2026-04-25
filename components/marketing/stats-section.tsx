@@ -1,13 +1,17 @@
 import { Clock, MapPin, Users, Zap } from "lucide-react";
 
-const stats = [
-  { icon: Zap, label: "Medicines in catalog", value: "1,200+", color: "text-primary" },
-  { icon: Users, label: "Hospitals served", value: "800+", color: "text-primary" },
-  { icon: MapPin, label: "Coverage area", value: "India-wide", color: "text-primary" },
-  { icon: Clock, label: "Avg. fulfillment", value: "24–48 hrs", color: "text-primary" },
-];
+type StatsSectionProps = {
+  productCount: number;
+};
 
-export function StatsSection() {
+export function StatsSection({ productCount }: StatsSectionProps) {
+  const stats = [
+    { icon: Zap, label: "Products", value: `${productCount}+`, color: "text-primary" },
+    { icon: Users, label: "Hospitals Served", value: "15+", color: "text-primary" },
+    { icon: MapPin, label: "Coverage", value: "Worldwide", color: "text-primary" },
+    { icon: Clock, label: "Avg. fulfillment", value: "24–48 hrs", color: "text-primary" },
+  ];
+
   return (
     <section className="w-full border-y border-border/40 bg-muted/15 py-16 md:py-24">
       <div className="mx-auto max-w-[1400px] px-4 md:px-8">

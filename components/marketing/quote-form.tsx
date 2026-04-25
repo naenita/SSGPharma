@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
+import { Building2, ClipboardList, Mail, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -50,6 +51,10 @@ export function QuoteForm({ embedded, recipientEmail, priorityPhone, companyName
     setSent(true);
   }
 
+  function iconInputClassName(hasTextarea?: boolean) {
+    return hasTextarea ? "pl-10" : "pl-10";
+  }
+
   return (
     <motion.form
       onSubmit={onSubmit}
@@ -65,21 +70,33 @@ export function QuoteForm({ embedded, recipientEmail, priorityPhone, companyName
     >
       <div className="space-y-2">
         <Label htmlFor="org">Organisation / hospital name</Label>
-        <Input id="org" name="org" required autoComplete="organization" />
+        <div className="relative">
+          <Building2 className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input id="org" name="org" required autoComplete="organization" className={iconInputClassName()} />
+        </div>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="email">Work email</Label>
-          <Input id="email" name="email" type="email" required autoComplete="email" />
+          <div className="relative">
+            <Mail className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input id="email" name="email" type="email" required autoComplete="email" className={iconInputClassName()} />
+          </div>
         </div>
         <div className="space-y-2">
           <Label htmlFor="phone">Phone / WhatsApp</Label>
-          <Input id="phone" name="phone" type="tel" required autoComplete="tel" />
+          <div className="relative">
+            <Phone className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input id="phone" name="phone" type="tel" required autoComplete="tel" className={iconInputClassName()} />
+          </div>
         </div>
       </div>
       <div className="space-y-2">
         <Label htmlFor="lines">Full line-item requirements</Label>
-        <Textarea id="lines" name="lines" required rows={6} />
+        <div className="relative">
+          <ClipboardList className="pointer-events-none absolute left-3 top-3 size-4 text-muted-foreground" />
+          <Textarea id="lines" name="lines" required rows={6} className="pl-10" />
+        </div>
       </div>
       {sent ? (
         <p className="text-sm font-medium text-primary">

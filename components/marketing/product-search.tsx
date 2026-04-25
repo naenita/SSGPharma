@@ -1,26 +1,20 @@
 "use client";
 
-import { useState } from "react";
 import { Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { motion } from "framer-motion";
 
 type Props = {
   placeholder?: string;
+  value: string;
   onFilter: (query: string) => void;
 };
 
-export function ProductSearch({ placeholder = "Search medicines by name, composition...", onFilter }: Props) {
-  const [query, setQuery] = useState("");
-
+export function ProductSearch({ placeholder = "Search medicines by name, composition...", value, onFilter }: Props) {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setQuery(value);
-    onFilter(value.toLowerCase());
+    onFilter(e.target.value);
   };
 
   const handleClear = () => {
-    setQuery("");
     onFilter("");
   };
 
@@ -30,22 +24,20 @@ export function ProductSearch({ placeholder = "Search medicines by name, composi
         <Search className="absolute left-3 size-4 text-muted-foreground" />
         <Input
           type="text"
-          value={query}
+          value={value}
           onChange={handleChange}
           placeholder={placeholder}
           className="pl-9 transition-all focus:ring-2 ring-primary/20"
         />
-        {query && (
-          <motion.button
+        {value && (
+          <button
             type="button"
             onClick={handleClear}
             className="absolute right-3 p-1 hover:text-foreground text-muted-foreground transition-colors"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
+            aria-label="Clear search"
           >
             <X className="size-4" />
-          </motion.button>
+          </button>
         )}
       </div>
     </div>

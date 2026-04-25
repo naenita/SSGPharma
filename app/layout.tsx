@@ -3,6 +3,7 @@ import Script from "next/script";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { SiteJsonLd } from "@/components/seo/site-json-ld";
+import { ThemeProvider } from "@/components/theme-provider";
 import { getSiteUrl } from "@/lib/site-url";
 
 const siteUrl = getSiteUrl();
@@ -54,7 +55,7 @@ export const metadata: Metadata = {
   },
   robots: { index: true, follow: true, googleBot: { index: true, follow: true } },
   icons: {
-    icon: "/favicon.ico",
+    icon: "/tlogo-white.png",
     apple: "/apple-touch-icon.png",
   },
 };
@@ -96,8 +97,10 @@ export default function RootLayout({
         )}
       </head>
       <body suppressHydrationWarning className="min-h-full flex flex-col overflow-x-hidden bg-background font-sans text-foreground">
-        <SiteJsonLd />
-        {children}
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          <SiteJsonLd />
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -223,6 +223,7 @@ export default async function ProductDetailPage({ params }: Props) {
   const faqs = parseFaqText(product.faqs);
   const faqSchemaItems = faqs.filter((faq) => faq.answer);
   const productTokens = getProductMatchTokens(product);
+  const galleryImages = (imageUrls.length > 1 ? imageUrls.slice(1) : [marketingImages.packaging, marketingImages.catalog]).slice(0, 2);
 
   const alternatives = otherProducts
     .filter((candidate) => {
@@ -373,6 +374,32 @@ export default async function ProductDetailPage({ params }: Props) {
                       product.manufacturer ? ` by ${product.manufacturer}` : ""
                     } and is available for institutional procurement and quote requests through SSG Pharma.`}
                 </p>
+
+                <div className="space-y-4 md:hidden">
+                  <div className="relative min-h-[20rem] overflow-hidden rounded-[2rem] border border-border/70 bg-muted shadow-sm sm:min-h-[24rem]">
+                    <ManagedImage
+                      src={primaryImage}
+                      alt={`${product.name} main product image`}
+                      fill
+                      priority
+                      sizes="100vw"
+                      className="object-cover"
+                    />
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {galleryImages.map((imageSrc, index) => (
+                      <div key={`${imageSrc}-${index}`} className="relative min-h-40 overflow-hidden rounded-[1.5rem] border border-border/70 bg-muted shadow-sm">
+                        <ManagedImage
+                          src={imageSrc}
+                          alt={`${product.name} gallery image ${index + 2}`}
+                          fill
+                          sizes="50vw"
+                          className="object-cover"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
 
               <div className="flex flex-wrap items-end gap-5">
@@ -419,7 +446,7 @@ export default async function ProductDetailPage({ params }: Props) {
               </div>
             </div>
 
-            <div className="grid gap-4 lg:grid-cols-[1fr_136px]">
+            <div className="hidden gap-4 md:grid lg:grid-cols-[1fr_136px]">
               <div className="relative min-h-[20rem] overflow-hidden rounded-[2rem] border border-border/70 bg-muted shadow-sm sm:min-h-[24rem]">
                 <ManagedImage
                   src={primaryImage}
@@ -431,7 +458,7 @@ export default async function ProductDetailPage({ params }: Props) {
                 />
               </div>
               <div className="grid gap-4">
-                {(imageUrls.length > 1 ? imageUrls.slice(1) : [marketingImages.packaging, marketingImages.catalog]).slice(0, 2).map((imageSrc, index) => (
+                {galleryImages.map((imageSrc, index) => (
                   <div key={`${imageSrc}-${index}`} className="relative min-h-40 overflow-hidden rounded-[1.5rem] border border-border/70 bg-muted shadow-sm">
                     <ManagedImage
                       src={imageSrc}

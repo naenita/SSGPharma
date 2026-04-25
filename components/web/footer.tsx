@@ -4,6 +4,9 @@ import { productDivisions, serviceLines } from "@/lib/divisions";
 
 export function SiteFooter() {
   const contactConfig = defaultPublicContactConfig;
+  const uniqueEmails = contactConfig.emails.filter(
+    (email, index, emails) => emails.findIndex((candidate) => candidate.value === email.value) === index,
+  );
 
   return (
     <footer className="mt-auto w-full border-t-2 border-border bg-muted/40">
@@ -69,7 +72,7 @@ export function SiteFooter() {
                 </a>
               </li>
             ))}
-            {contactConfig.emails.map((email) => (
+            {uniqueEmails.map((email) => (
               <li key={email.id}>
                 <a suppressHydrationWarning className="transition-colors duration-200 hover:text-foreground" href={formatMailtoHref(email.value)}>
                   {email.value}

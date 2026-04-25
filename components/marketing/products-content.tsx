@@ -42,6 +42,7 @@ export function ProductsContent({ items, division }: Props) {
     return items.filter(
       (item) =>
         item.name.toLowerCase().includes(query) ||
+        (item.description?.toLowerCase().includes(query) ?? false) ||
         (item.salts?.toLowerCase().includes(query) ?? false) ||
         (item.manufacturer?.toLowerCase().includes(query) ?? false) ||
         (item.category?.name.toLowerCase().includes(query) ?? false),
@@ -51,7 +52,7 @@ export function ProductsContent({ items, division }: Props) {
   return (
     <div className="mx-auto w-full max-w-[1400px] px-4 py-12 md:px-6 lg:px-8 md:py-16">
       <div className="mb-8 space-y-4">
-        <ProductSearch onFilter={setSearchQuery} />
+        <ProductSearch value={searchQuery} onFilter={setSearchQuery} />
 
         {items.length > 0 && (
           <div className="flex items-center justify-between text-sm text-muted-foreground">

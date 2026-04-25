@@ -2,13 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FadeIn } from "@/components/motion/fade-in";
+import { DivisionProductsList } from "@/components/marketing/division-products-list";
 import { ManagedImage } from "@/components/web/managed-image";
 import { getProductDivision, productDivisions, type ProductDivision } from "@/lib/divisions";
-import { getStableMarketingFallback, marketingImages } from "@/lib/marketing-images";
-import { formatInrFromPaise } from "@/lib/money";
+import { marketingImages } from "@/lib/marketing-images";
 import { prisma } from "@/lib/prisma";
 import { getSiteUrl } from "@/lib/site-url";
-import { cn } from "@/lib/utils";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -77,6 +76,7 @@ async function getDivisionPageData(paramsPromise: Props["params"]) {
         slug: true,
         name: true,
         salts: true,
+        description: true,
         imageUrl1: true,
         imageUrl2: true,
         imageUrl3: true,
@@ -173,68 +173,7 @@ export default async function DivisionPage({ params }: Props) {
             {items.length} medicine{items.length === 1 ? "" : "s"} currently tagged &ldquo;{division.catalogCategory}&rdquo;.
           </p>
         </FadeIn>
-
-        <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {items.length === 0 ? (
-            <div className="sm:col-span-2 lg:col-span-3">
-              <p className="rounded-2xl border border-dashed border-border bg-muted/20 px-6 py-12 text-center text-muted-foreground">
-                Nothing tagged yet. Add medicines in your inventory console with category{" "}
-                <span className="font-medium text-foreground">{division.catalogCategory}</span> so they appear here.
-              </p>
-            </div>
-          ) : (
-            items.map((m, idx) => (
-              <FadeIn key={m.id} delay={idx * 0.02}>
-                {(() => {
-                  const imageSrc = m.imageUrl1 || m.imageUrl2 || m.imageUrl3;
-                  const fallbackSrc = getStableMarketingFallback(`${m.id}:${m.name}`);
-
-                  return (
-                <Link
-                  href={`/products/${m.slug}`}
-                  className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/80 bg-card/50 transition-all hover:border-border hover:bg-card hover:shadow-md"
-                >
-                  <div className="relative h-40 w-full overflow-hidden bg-muted">
-                    <ManagedImage
-                      src={imageSrc}
-                      alt={m.name}
-                      fallbackSrc={fallbackSrc}
-                      fill
-                      sizes="(max-width: 768px) 100vw, 33vw"
-                      className="object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
-                  </div>
-
-                  <div className="flex flex-1 flex-col gap-3 p-4">
-                    <div>
-                      <h3 className="font-[family-name:var(--font-display)] text-lg font-medium leading-tight group-hover:text-primary transition-colors">
-                        {m.name}
-                      </h3>
-                      <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{m.salts}</p>
-                    </div>
-
-                    {/* Footer with Price and Stock */}
-                    <div className="mt-auto flex items-end justify-between gap-2">
-                      <span className="text-sm font-semibold tabular-nums text-foreground">
-                        {formatInrFromPaise(m.pricePaise)}
-                      </span>
-                      <span
-                        className={cn(
-                          "text-xs font-medium px-2 py-1 rounded-full whitespace-nowrap",
-                          m.isActive ? "bg-primary/15 text-primary" : "bg-destructive/15 text-destructive",
-                        )}
-                      >
-                        {m.isActive ? "Active" : "Inactive"}
-                      </span>
-                    </div>
-                  </div>
-                </Link>
-                  );
-                })()}
-              </FadeIn>
-            ))
-          )}
-        </div>
+        <DivisionProductsList items={items} division={division} />
       </div>
     </>
   );

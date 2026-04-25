@@ -9,6 +9,8 @@ import {
   ArrowLeft,
   Boxes,
   CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
   ExternalLink,
   Eye,
   EyeOff,
@@ -380,6 +382,10 @@ async function readFileAsOptimizedDataUrl(file: File) {
   }
 }
 
+function isInlineImageValue(value: string) {
+  return value.startsWith("data:") || value.startsWith("blob:");
+}
+
 async function fetchJson<T>(url: string) {
   const response = await fetch(url, { credentials: "same-origin" });
   if (!response.ok) {
@@ -492,6 +498,131 @@ function PasswordField({
         >
           {shown ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
         </button>
+      </div>
+    </div>
+  );
+}
+
+type AdminImagePreview = {
+  src: string;
+  alt: string;
+  label: string;
+};
+
+function AdminImagePreviewPanel({
+  images,
+  emptyLabel,
+}: {
+  images: AdminImagePreview[];
+  emptyLabel: string;
+}) {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (images.length === 0) {
+      setActiveIndex(0);
+      return;
+    }
+
+    if (activeIndex > images.length - 1) {
+      setActiveIndex(0);
+    }
+  }, [activeIndex, images.length]);
+
+  if (images.length === 0) {
+    return (
+      <div className="flex min-h-40 items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50/80 px-4 py-6 text-center text-sm text-gray-500">
+        {emptyLabel}
+      </div>
+    );
+  }
+
+  const activeImage = images[activeIndex] ?? images[0]!;
+  const hasMultipleImages = images.length > 1;
+
+  function showPreviousImage() {
+    setActiveIndex((current) => (current - 1 + images.length) % images.length);
+  }
+
+  function showNextImage() {
+    setActiveIndex((current) => (current + 1) % images.length);
+  }
+
+  function handleTouchStart(event: React.TouchEvent<HTMLDivElement>) {
+    if (!hasMultipleImages) return;
+    setTouchStartX(event.changedTouches[0]?.clientX ?? null);
+  }
+
+  function handleTouchEnd(event: React.TouchEvent<HTMLDivElement>) {
+    if (!hasMultipleImages || touchStartX === null) return;
+
+    const touchEndX = event.changedTouches[0]?.clientX ?? touchStartX;
+    const deltaX = touchEndX - touchStartX;
+    const swipeThreshold = 35;
+
+    if (deltaX <= -swipeThreshold) {
+      showNextImage();
+    } else if (deltaX >= swipeThreshold) {
+      showPreviousImage();
+    }
+
+    setTouchStartX(null);
+  }
+
+  return (
+    <div className="rounded-lg border border-gray-200 bg-gray-50/80 p-4">
+      <div className="flex flex-col items-center gap-3">
+        <div
+          className="relative flex h-[160px] w-full max-w-[240px] items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={activeImage.src} alt={activeImage.alt} className="h-full w-full object-contain p-2" />
+
+          {hasMultipleImages ? (
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon-sm"
+                className="absolute left-2 top-1/2 -translate-y-1/2 border-gray-300 bg-white/95 shadow-sm"
+                onClick={showPreviousImage}
+                aria-label="Previous image"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon-sm"
+                className="absolute right-2 top-1/2 -translate-y-1/2 border-gray-300 bg-white/95 shadow-sm"
+                onClick={showNextImage}
+                aria-label="Next image"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-white/90 px-2 py-0.5 text-[11px] font-medium text-gray-600 shadow-sm">
+                {activeIndex + 1} / {images.length}
+              </div>
+            </>
+          ) : null}
+        </div>
+        <p className="text-xs font-medium text-gray-600">{activeImage.label}</p>
+        {hasMultipleImages ? (
+          <div className="flex items-center gap-1.5">
+            {images.map((image, index) => (
+              <button
+                key={`${image.label}-${index}`}
+                type="button"
+                onClick={() => setActiveIndex(index)}
+                className={`h-2 w-2 rounded-full transition ${index === activeIndex ? "bg-[#0D7377]" : "bg-gray-300 hover:bg-gray-400"}`}
+                aria-label={`Show image ${index + 1}`}
+              />
+            ))}
+          </div>
+        ) : null}
       </div>
     </div>
   );
@@ -1165,15 +1296,40 @@ export function AdminDashboard() {
     .sort((left, right) => new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime())
     .slice(0, 10);
 
+  const productPreviewImages = productImageSlots
+    .map(({ slot, imageKey, clearKey }) => {
+      const src = productForm[clearKey] ? "" : productForm[imageKey].trim();
+
+      if (!src) return null;
+
+      return {
+        src,
+        alt: `Product image ${slot} preview`,
+        label: `Image ${slot}`,
+      };
+    })
+    .filter((image): image is AdminImagePreview => Boolean(image));
+
+  const moleculePreviewImages =
+    moleculeForm.clearImage || !moleculeForm.imageUrl.trim()
+      ? []
+      : [
+          {
+            src: moleculeForm.imageUrl.trim(),
+            alt: `${moleculeForm.name || "Molecule"} image preview`,
+            label: "Image 1",
+          },
+        ];
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="sticky top-0 z-20 border-b border-gray-200 bg-white/95 backdrop-blur">
-        <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+        <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 md:py-5 lg:px-8">
+          <div className="flex flex-col gap-3 md:gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#0D7377]">Admin Console</p>
-              <h1 className="mt-2 text-3xl font-semibold tracking-tight text-gray-900">SSG Pharma Management</h1>
-              <p className="mt-2 text-sm text-gray-500">Catalog, molecules, contacts, and account settings in one place.</p>
+              <h1 className="mt-1.5 text-2xl font-semibold tracking-tight text-gray-900 md:mt-2 md:text-3xl">SSG Pharma Management</h1>
+              <p className="mt-1.5 text-xs text-gray-500 md:mt-2 md:text-sm">Catalog, molecules, contacts, and account settings in one place.</p>
             </div>
             <div className="flex w-full flex-col gap-3 lg:w-auto">
               <div className="md:hidden">
@@ -1219,7 +1375,8 @@ export function AdminDashboard() {
               <Button
                 type="button"
                 variant="outline"
-                className="w-full border-gray-300 bg-white text-gray-700 hover:border-[#0D7377] hover:text-[#0D7377] md:w-auto"
+                size="sm"
+                className="self-end rounded-full border-gray-300 bg-white/90 px-2.5 text-[11px] text-gray-500 hover:border-gray-400 hover:text-gray-700 md:w-fit md:self-start"
                 onClick={handleLogout}
                 disabled={logoutSaving}
               >
@@ -1763,6 +1920,7 @@ export function AdminDashboard() {
                 </SectionCard>
 
                 <SectionCard title="Images" description="Upload up to three images of the product">
+                  <AdminImagePreviewPanel images={productPreviewImages} emptyLabel="Add a product image by pasting a URL or uploading a file." />
                   <div className="grid gap-4 lg:grid-cols-3">
                     {productImageSlots.map(({ slot, imageKey, clearKey }) => {
                       const value = productForm[imageKey];
@@ -1771,7 +1929,6 @@ export function AdminDashboard() {
                       return (
                         <div key={slot} className="rounded-lg border border-gray-200 p-4">
                           <p className="text-sm font-semibold text-gray-900">Image {slot}</p>
-                          <p className="mt-3 text-xs text-gray-500 break-all">{value || "No image selected"}</p>
                           <div className="mt-4 space-y-2">
                             <label htmlFor={`product-image-url-${slot}`} className="text-xs font-medium uppercase tracking-wide text-gray-500">
                               Image URL
@@ -1779,7 +1936,7 @@ export function AdminDashboard() {
                             <Input
                               id={`product-image-url-${slot}`}
                               type="url"
-                              value={value}
+                              value={isInlineImageValue(value) ? "" : value}
                               onChange={(event) =>
                                 setProductForm((current) => ({
                                   ...current,
@@ -2083,11 +2240,11 @@ export function AdminDashboard() {
                       <label htmlFor="molecule-image" className="text-sm font-medium text-gray-700">
                         Image
                       </label>
-                      <p className="text-xs text-gray-500 break-all">{moleculeForm.imageUrl || "No image selected"}</p>
+                      <AdminImagePreviewPanel images={moleculePreviewImages} emptyLabel="Add a molecule image by pasting a URL or uploading a file." />
                       <Input
                         id="molecule-image-url"
                         type="url"
-                        value={moleculeForm.imageUrl}
+                        value={isInlineImageValue(moleculeForm.imageUrl) ? "" : moleculeForm.imageUrl}
                         onChange={(event) =>
                           setMoleculeForm((current) => ({
                             ...current,

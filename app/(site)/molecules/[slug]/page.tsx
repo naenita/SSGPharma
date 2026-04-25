@@ -233,6 +233,17 @@ export default async function MoleculeDetailPage({ params }: Props) {
                   {molecule.overview ||
                     `${molecule.name} is presented here with its overview, approval history, uses, administration, side effects, precautions, and reference material.`}
                 </p>
+
+                <div className="relative min-h-[320px] overflow-hidden rounded-[2rem] border border-border/70 bg-muted shadow-sm md:hidden">
+                  <ManagedImage
+                    src={imageSrc}
+                    alt={`${molecule.name} molecule page image`}
+                    fill
+                    priority
+                    sizes="100vw"
+                    className="object-cover"
+                  />
+                </div>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-3">
@@ -264,7 +275,7 @@ export default async function MoleculeDetailPage({ params }: Props) {
               </div>
             </div>
 
-            <div className="relative min-h-[420px] overflow-hidden rounded-[2rem] border border-border/70 bg-muted shadow-sm">
+            <div className="hidden min-h-[420px] overflow-hidden rounded-[2rem] border border-border/70 bg-muted shadow-sm md:block">
               <ManagedImage
                 src={imageSrc}
                 alt={`${molecule.name} molecule page image`}
