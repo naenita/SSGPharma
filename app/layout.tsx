@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { DM_Sans, Fraunces, Geist_Mono } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SiteJsonLd } from "@/components/seo/site-json-ld";
+import { RouteCurtain } from "@/components/web/route-curtain";
 import { marketingImages } from "@/lib/marketing-images";
 import { getSiteUrl } from "@/lib/site-url";
 
@@ -115,6 +117,9 @@ export default function RootLayout({
         <SiteJsonLd />
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           {children}
+          <Suspense fallback={null}>
+            <RouteCurtain />
+          </Suspense>
         </ThemeProvider>
       </body>
     </html>

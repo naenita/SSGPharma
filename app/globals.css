@@ -154,6 +154,50 @@
   }
 }
 
+.route-curtain {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  transform: translateX(-100%);
+  visibility: hidden;
+}
+
+.route-curtain span {
+  font-size: clamp(2rem, 7vw, 5.5rem);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.route-curtain-active {
+  visibility: visible;
+  animation: route-curtain-sweep 760ms cubic-bezier(0.76, 0, 0.24, 1) both;
+}
+
+@keyframes route-curtain-sweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  34%,
+  62% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-curtain-active {
+    animation-duration: 180ms;
+  }
+}
+
 @layer components {
   .admin-theme {
     color-scheme: light;
