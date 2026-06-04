@@ -31,13 +31,25 @@ type ProductListItem = {
 
 type Props = {
   items: ProductListItem[];
-  division?: { title: string; catalogCategory: string };
+  division?: { slug?: string; title: string; catalogCategory: string };
   initialQuery?: string;
+  page: number;
+  totalCount: number;
+  totalPages: number;
 };
 
-export function ProductsContent({ items, division, initialQuery = "" }: Props) {
+export function ProductsContent({ items, division, initialQuery = "", page, totalCount, totalPages }: Props) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState(initialQuery);
+
+  const pageHref = (nextPage: number) => {
+    const params = new URLSearchParams();
+    if (division?.slug) params.set("division", division.slug);
+    if (initialQuery) params.set("q", initialQuery);
+    if (nextPage > 1) params.set("page", String(nextPage));
+
+    return `/products${params.toString() ? `?${params.toString()}` : ""}`;
+  };
 
   const filteredItems = useMemo(() => {
     if (!searchQuery) return items;
@@ -64,19 +76,28 @@ export function ProductsContent({ items, division, initialQuery = "" }: Props) {
             } else {
               next.delete("q");
             }
+            next.delete("page");
             router.replace(`/products${next.toString() ? `?${next.toString()}` : ""}`);
           }}
         />
 
-        {items.length > 0 && (
+        {totalCount > 0 && (
           <div className="flex items-center justify-between text-sm text-muted-foreground">
             <p>
-              Showing <span className="font-semibold text-foreground">{filteredItems.length}</span> of{" "}
-              <span className="font-semibold text-foreground">{items.length}</span> products
+              Showing <span className="font-semibold text-foreground">{filteredItems.length}</span> on page{" "}
+              <span className="font-semibold text-foreground">{page}</span> of{" "}
+              <span className="font-semibold text-foreground">{totalCount}</span> products
             </p>
             {searchQuery && (
               <button
-                onClick={() => setSearchQuery("")}
+                type="button"
+                onClick={() => {
+                  setSearchQuery("");
+                  const next = new URLSearchParams(window.location.search);
+                  next.delete("q");
+                  next.delete("page");
+                  router.replace(`/products${next.toString() ? `?${next.toString()}` : ""}`);
+                }}
                 className="text-primary hover:underline"
               >
                 Clear search
@@ -163,6 +184,35 @@ export function ProductsContent({ items, division, initialQuery = "" }: Props) {
           ))
         )}
       </div>
+
+      {totalPages > 1 ? (
+        <nav className="mt-10 flex items-center justify-center gap-3" aria-label="Product pages">
+          <Link
+            href={pageHref(Math.max(1, page - 1))}
+            aria-disabled={page <= 1}
+            className={cn(
+              "rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted",
+              page <= 1 && "pointer-events-none opacity-50",
+            )}
+          >
+            Previous
+          </Link>
+          <span className="text-sm text-muted-foreground">
+            Page <span className="font-medium text-foreground">{page}</span> of{" "}
+            <span className="font-medium text-foreground">{totalPages}</span>
+          </span>
+          <Link
+            href={pageHref(Math.min(totalPages, page + 1))}
+            aria-disabled={page >= totalPages}
+            className={cn(
+              "rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted",
+              page >= totalPages && "pointer-events-none opacity-50",
+            )}
+          >
+            Next
+          </Link>
+        </nav>
+      ) : null}
     </div>
   );
 }

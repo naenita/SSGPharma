@@ -1,16 +1,23 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { DivisionProductsList } from "@/components/marketing/division-products-list";
 import { FadeIn } from "@/components/motion/fade-in";
 import { getProductDivision } from "@/lib/divisions";
-import { prisma } from "@/lib/prisma";
+import { PageLoading } from "@/components/web/page-loading";
+import { getCachedDivisionProducts } from "@/lib/catalog-data";
 import { getSiteUrl } from "@/lib/site-url";
 
-type Props = { params: Promise<{ slug: string }> };
+type Props = { params: Promise<{ slug: string }>; searchParams: Promise<{ page?: string }> };
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
+
+function parsePage(value: string | undefined) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 1;
+}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
@@ -31,22 +38,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function DivisionPage({ params }: Props) {
+export default async function DivisionPage({ params, searchParams }: Props) {
   const { slug } = await params;
+  const { page: pageParam } = await searchParams;
   const division = getProductDivision(slug);
   if (!division) notFound();
-
-  const items = await prisma.product.findMany({
-    where: {
-      category: {
-        is: {
-          OR: [{ slug: division.slug }, { name: division.catalogCategory }],
-        },
-      },
-    },
-    orderBy: [{ isActive: "desc" }, { name: "asc" }],
-    include: { category: true },
-  });
+  const page = parsePage(pageParam);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -98,15 +95,34 @@ export default async function DivisionPage({ params }: Props) {
       </section>
 
       <div className="mx-auto max-w-[1400px] px-4 py-14 md:px-6">
-        <FadeIn>
-          <h2 className="font-[family-name:var(--font-display)] text-2xl md:text-3xl">Listed in this division</h2>
-          <p className="mt-2 text-muted-foreground">
-            {items.length} medicine{items.length === 1 ? "" : "s"} currently tagged &ldquo;{division.catalogCategory}&rdquo;.
-          </p>
-        </FadeIn>
-
-        <DivisionProductsList items={items} division={division} />
+        <Suspense key={`${slug}-${page}`} fallback={<PageLoading title={`${division.title} products`} />}>
+          <DivisionProductsSection slug={slug} page={page} />
+        </Suspense>
       </div>
+    </>
+  );
+}
+
+async function DivisionProductsSection({ slug, page }: { slug: string; page: number }) {
+  const data = await getCachedDivisionProducts({ slug, page });
+  if (!data) notFound();
+
+  return (
+    <>
+      <FadeIn>
+        <h2 className="font-[family-name:var(--font-display)] text-2xl md:text-3xl">Listed in this division</h2>
+        <p className="mt-2 text-muted-foreground">
+          {data.totalCount} medicine{data.totalCount === 1 ? "" : "s"} currently tagged &ldquo;{data.division.catalogCategory}&rdquo;.
+        </p>
+      </FadeIn>
+
+      <DivisionProductsList
+        items={data.items}
+        division={data.division}
+        page={data.page}
+        totalCount={data.totalCount}
+        totalPages={data.totalPages}
+      />
     </>
   );
 }

@@ -7,6 +7,7 @@ export async function GET(): Promise<Response> {
   try {
     const items = await prisma.product.findMany({
       orderBy: [{ isActive: "desc" }, { name: "asc" }],
+      take: 100,
       select: {
         id: true,
         name: true,

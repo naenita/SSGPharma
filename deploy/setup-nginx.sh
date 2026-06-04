@@ -22,6 +22,49 @@ server {
     listen [::]:80;
     server_name ${DOMAIN};
 
+    gzip on;
+    gzip_comp_level 5;
+    gzip_min_length 1024;
+    gzip_vary on;
+    gzip_proxied any;
+    gzip_types
+        application/atom+xml
+        application/javascript
+        application/json
+        application/ld+json
+        application/manifest+json
+        application/rss+xml
+        application/vnd.ms-fontobject
+        application/wasm
+        application/x-font-ttf
+        application/xml
+        font/opentype
+        image/svg+xml
+        text/css
+        text/javascript
+        text/plain
+        text/xml;
+
+    brotli on;
+    brotli_comp_level 5;
+    brotli_types
+        application/atom+xml
+        application/javascript
+        application/json
+        application/ld+json
+        application/manifest+json
+        application/rss+xml
+        application/vnd.ms-fontobject
+        application/wasm
+        application/x-font-ttf
+        application/xml
+        font/opentype
+        image/svg+xml
+        text/css
+        text/javascript
+        text/plain
+        text/xml;
+
     location / {
         proxy_pass http://127.0.0.1:${APP_PORT};
         proxy_http_version 1.1;

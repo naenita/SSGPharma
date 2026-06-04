@@ -9,6 +9,18 @@ export async function GET() {
 
     const inquiries = await prisma.inquiry.findMany({
       orderBy: { createdAt: "desc" },
+      take: 200,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        message: true,
+        inquiryType: true,
+        status: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     });
 
     return NextResponse.json(inquiries);

@@ -1,4 +1,4 @@
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
 import { internalServerError, parseJsonBody } from "@/lib/api";
 import { medicineUpdateSchema } from "@/lib/validators/medicine";
@@ -111,6 +111,8 @@ export async function PATCH(request: Request, ctx: Ctx): Promise<Response> {
       },
     });
 
+    revalidateTag("products", "max");
+    revalidatePath("/");
     revalidatePath("/products");
 
     return NextResponse.json(mapProductToMedicine(updated));
@@ -129,6 +131,8 @@ export async function DELETE(request: Request, ctx: Ctx): Promise<Response> {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
+  revalidateTag("products", "max");
+  revalidatePath("/");
   revalidatePath("/products");
 
   return NextResponse.json({ ok: true });

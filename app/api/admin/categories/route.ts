@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { requireAdminApi, requireAdminMutation } from "@/lib/require-admin";
 import { mutationErrorResponse, parseJsonBody } from "@/lib/api";
 import { productDivisions } from "@/lib/divisions";
@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { createCategorySchema } from "@/lib/validators/category";
 
 function revalidateCatalogPaths(productSlugs: string[] = []) {
+  revalidateTag("products", "max");
   revalidatePath("/products");
   for (const division of productDivisions) {
     revalidatePath(`/divisions/${division.slug}`);
@@ -23,6 +24,16 @@ export async function GET() {
   try {
     const categories = await prisma.category.findMany({
       orderBy: { name: "asc" },
+      take: 200,
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        description: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     });
 
     return NextResponse.json(categories);

@@ -136,6 +136,12 @@ export const ensureContactConfig = cache(async function ensureContactConfig() {
 
   const existingPhones = await prisma.contactPhone.findMany({
     where: { configId: config.id },
+    take: 100,
+    select: {
+      id: true,
+      value: true,
+      purpose: true,
+    },
   });
   const phoneKeys = new Set<string>();
   for (const phone of existingPhones) {
@@ -158,6 +164,12 @@ export const ensureContactConfig = cache(async function ensureContactConfig() {
 
   const existingEmails = await prisma.contactEmail.findMany({
     where: { configId: config.id },
+    take: 100,
+    select: {
+      id: true,
+      value: true,
+      type: true,
+    },
   });
   const emailKeys = new Set<string>();
   for (const email of existingEmails) {

@@ -1,4 +1,4 @@
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
 import { internalServerError, parseJsonBody } from "@/lib/api";
 import { medicineCreateSchema } from "@/lib/validators/medicine";
@@ -98,6 +98,8 @@ export async function POST(request: Request): Promise<Response> {
       },
     });
 
+    revalidateTag("products", "max");
+    revalidatePath("/");
     revalidatePath("/products");
 
     return NextResponse.json(mapProductToMedicine(created), { status: 201 });

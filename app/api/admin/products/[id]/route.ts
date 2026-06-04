@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { requireAdminApi, requireAdminMutation } from "@/lib/require-admin";
 import { mutationErrorResponse, parseJsonBody } from "@/lib/api";
 import { productDivisions } from "@/lib/divisions";
@@ -9,6 +9,7 @@ import { updateProductSchema } from "@/lib/validators/product";
 type RouteContext = { params: Promise<{ id: string }> };
 
 function revalidateProductPaths(slug?: string) {
+  revalidateTag("products", "max");
   revalidatePath("/");
   revalidatePath("/products");
   for (const division of productDivisions) {

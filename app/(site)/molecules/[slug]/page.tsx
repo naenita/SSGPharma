@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/web/breadcrumbs";
 import { ManagedImage } from "@/components/web/managed-image";
@@ -11,15 +11,49 @@ import { getSiteUrl } from "@/lib/site-url";
 
 type Props = { params: Promise<{ slug: string }> };
 
-const getMoleculePageData = cache(async (slug: string) => {
+const getMoleculePageData = unstable_cache(async (slug: string) => {
   const molecule = await prisma.molecule.findUnique({
     where: { slug },
-    include: {
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      synonyms: true,
+      imageUrl: true,
+      isPublished: true,
+      overview: true,
+      backgroundAndApproval: true,
+      uses: true,
+      administration: true,
+      sideEffects: true,
+      warnings: true,
+      precautions: true,
+      expertTips: true,
+      faqs: true,
+      references: true,
       products: {
-        include: {
+        where: {
           product: {
-            include: {
-              category: true,
+            isActive: true,
+          },
+        },
+        take: 6,
+        select: {
+          product: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              manufacturer: true,
+              dosage: true,
+              packSize: true,
+              description: true,
+              isActive: true,
+              category: {
+                select: {
+                  name: true,
+                },
+              },
             },
           },
         },
@@ -36,10 +70,17 @@ const getMoleculePageData = cache(async (slug: string) => {
     },
     orderBy: [{ updatedAt: "desc" }],
     take: 3,
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      synonyms: true,
+      overview: true,
+    },
   });
 
   return { molecule, relatedPublishedMolecules };
-});
+}, ["molecule-page-data"], { revalidate: 3600, tags: ["molecules"] });
 
 function MoleculeSection({ title, content }: { title: string; content?: string | null }) {
   if (!content?.trim()) return null;
@@ -57,7 +98,6 @@ function MoleculeSection({ title, content }: { title: string; content?: string |
 }
 
 export const revalidate = 3600;
-export const dynamic = "force-dynamic";
 
 export const dynamicParams = true;
 
@@ -146,10 +186,7 @@ export default async function MoleculeDetailPage({ params }: Props) {
   const faqs = parseFaqText(molecule.faqs);
   const faqSchemaItems = faqs.filter((faq) => faq.answer);
   const references = parseReferenceText(molecule.references);
-  const linkedProducts = molecule.products
-    .map((entry) => entry.product)
-    .filter((product) => product.isActive)
-    .slice(0, 6);
+  const linkedProducts = molecule.products.map((entry) => entry.product);
 
   const moleculeJsonLd = {
     "@context": "https://schema.org",

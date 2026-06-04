@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { requireAdminApi, requireAdminMutation } from "@/lib/require-admin";
 import { mutationErrorResponse, parseJsonBody } from "@/lib/api";
 import { productDivisions } from "@/lib/divisions";
@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { createProductSchema } from "@/lib/validators/product";
 
 function revalidateProductPaths(slug?: string) {
+  revalidateTag("products", "max");
   revalidatePath("/");
   revalidatePath("/products");
   for (const division of productDivisions) {
@@ -32,6 +33,7 @@ export async function GET() {
         },
       },
       orderBy: { createdAt: "desc" },
+      take: 200,
     });
     return NextResponse.json(products);
   } catch (error) {

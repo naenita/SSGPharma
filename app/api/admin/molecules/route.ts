@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { requireAdminApi, requireAdminMutation } from "@/lib/require-admin";
 import { mutationErrorResponse, parseJsonBody } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
 import { createMoleculeSchema } from "@/lib/validators/molecule";
 
 function revalidateMoleculePaths(slug?: string) {
+  revalidateTag("molecules", "max");
   revalidatePath("/molecules");
   if (slug) {
     revalidatePath(`/molecules/${slug}`);
@@ -19,6 +20,27 @@ export async function GET() {
   try {
     const molecules = await prisma.molecule.findMany({
       orderBy: { name: "asc" },
+      take: 200,
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        synonyms: true,
+        imageUrl: true,
+        isPublished: true,
+        overview: true,
+        backgroundAndApproval: true,
+        uses: true,
+        administration: true,
+        sideEffects: true,
+        warnings: true,
+        precautions: true,
+        expertTips: true,
+        faqs: true,
+        references: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     });
     return NextResponse.json(molecules);
   } catch (error) {

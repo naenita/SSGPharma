@@ -35,6 +35,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     const meds = await prisma.product.findMany({
       select: { slug: true, updatedAt: true },
+      take: 1000,
     });
     medicineRoutes = meds.map((m) => ({
       url: `${base}/products/${m.slug}`,
@@ -46,6 +47,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const molecules = await prisma.molecule.findMany({
       where: { isPublished: true },
       select: { slug: true, updatedAt: true },
+      take: 1000,
     });
 
     moleculeRoutes = molecules.map((molecule) => ({

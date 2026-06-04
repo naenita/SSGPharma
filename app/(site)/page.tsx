@@ -9,7 +9,7 @@ import { StaggerItem, StaggerList } from "@/components/motion/stagger-list";
 import { buttonVariants } from "@/components/ui/button";
 import { productDivisions } from "@/lib/divisions";
 import { marketingImages } from "@/lib/marketing-images";
-import { prisma } from "@/lib/prisma";
+import { getCachedHomepageProducts } from "@/lib/catalog-data";
 import { cn } from "@/lib/utils";
 
 const pillars = [
@@ -33,40 +33,17 @@ const pillars = [
 
 export const revalidate = 3600;
 
-async function getHomepageProducts() {
-  try {
-    return await prisma.product.findMany({
-      orderBy: [{ isActive: "desc" }, { name: "asc" }],
-      select: {
-        id: true,
-        slug: true,
-        name: true,
-        manufacturer: true,
-        dosage: true,
-        description: true,
-        pricePaise: true,
-        priceSuffix: true,
-        category: {
-          select: {
-            name: true,
-            slug: true,
-          },
-        },
-      },
-    });
-  } catch {
-    return [];
-  }
-}
-
 export default async function HomePage() {
-  const products = await getHomepageProducts();
+  const { products, productCount } = await getCachedHomepageProducts().catch(() => ({
+    products: [],
+    productCount: 0,
+  }));
 
   return (
     <>
       <Hero />
 
-      <StatsSection productCount={products.length} />
+      <StatsSection productCount={productCount} />
 
       <HomepageSearchSection products={products} />
 

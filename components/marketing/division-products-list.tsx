@@ -26,13 +26,23 @@ type DivisionProductItem = {
 type Props = {
   items: DivisionProductItem[];
   division: {
+    slug?: string;
     title: string;
     catalogCategory: string;
   };
+  page: number;
+  totalCount: number;
+  totalPages: number;
 };
 
-export function DivisionProductsList({ items, division }: Props) {
+export function DivisionProductsList({ items, division, page, totalCount, totalPages }: Props) {
   const [searchQuery, setSearchQuery] = useState("");
+
+  const pageHref = (nextPage: number) => {
+    const params = new URLSearchParams();
+    if (nextPage > 1) params.set("page", String(nextPage));
+    return `/divisions/${division.slug ?? ""}${params.toString() ? `?${params.toString()}` : ""}`;
+  };
 
   const filteredItems = useMemo(() => {
     if (!searchQuery) return items;
@@ -55,7 +65,7 @@ export function DivisionProductsList({ items, division }: Props) {
           <div className="flex items-center justify-between text-sm text-muted-foreground">
             <p>
               Showing <span className="font-semibold text-foreground">{filteredItems.length}</span> of{" "}
-              <span className="font-semibold text-foreground">{items.length}</span> products
+              <span className="font-semibold text-foreground">{totalCount}</span> products
             </p>
             {searchQuery ? (
               <button type="button" onClick={() => setSearchQuery("")} className="text-primary hover:underline">
@@ -127,6 +137,35 @@ export function DivisionProductsList({ items, division }: Props) {
           })
         )}
       </div>
+
+      {totalPages > 1 ? (
+        <nav className="mt-10 flex items-center justify-center gap-3" aria-label={`${division.title} product pages`}>
+          <Link
+            href={pageHref(Math.max(1, page - 1))}
+            aria-disabled={page <= 1}
+            className={cn(
+              "rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted",
+              page <= 1 && "pointer-events-none opacity-50",
+            )}
+          >
+            Previous
+          </Link>
+          <span className="text-sm text-muted-foreground">
+            Page <span className="font-medium text-foreground">{page}</span> of{" "}
+            <span className="font-medium text-foreground">{totalPages}</span>
+          </span>
+          <Link
+            href={pageHref(Math.min(totalPages, page + 1))}
+            aria-disabled={page >= totalPages}
+            className={cn(
+              "rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted",
+              page >= totalPages && "pointer-events-none opacity-50",
+            )}
+          >
+            Next
+          </Link>
+        </nav>
+      ) : null}
     </>
   );
 }

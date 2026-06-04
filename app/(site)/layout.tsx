@@ -3,7 +3,7 @@ import { SiteFooter } from "@/components/web/footer";
 import { FloatingInquiry } from "@/components/marketing/floating-inquiry";
 import { defaultPublicContactConfig, getContactConfig } from "@/lib/contact-config";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 export default async function SiteLayout({ children }: { children: React.ReactNode }) {
   const contactConfig = await getContactConfig().catch(() => defaultPublicContactConfig);

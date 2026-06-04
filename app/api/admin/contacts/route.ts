@@ -10,6 +10,18 @@ export async function GET(): Promise<Response> {
 
     const contacts = await prisma.inquiry.findMany({
       orderBy: { createdAt: "desc" },
+      take: 200,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        message: true,
+        inquiryType: true,
+        status: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     });
 
     return NextResponse.json(contacts);

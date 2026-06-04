@@ -1,78 +1,25 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { Suspense } from "react";
 import { FadeIn } from "@/components/motion/fade-in";
 import { ProductsContent } from "@/components/marketing/products-content";
 import { getProductDivision, productDivisions } from "@/lib/divisions";
 import { marketingImages } from "@/lib/marketing-images";
-import { prisma } from "@/lib/prisma";
+import { PageLoading } from "@/components/web/page-loading";
+import { getCachedProductsPageData } from "@/lib/catalog-data";
 import { getSiteUrl } from "@/lib/site-url";
 import { cn } from "@/lib/utils";
 
 export const revalidate = 3600;
 
 type Props = {
-  searchParams: Promise<{ division?: string; q?: string }>;
+  searchParams: Promise<{ division?: string; q?: string; page?: string }>;
 };
 
-async function getProductsPageData(searchParamsPromise: Props["searchParams"]) {
-  try {
-    const { division: divisionSlug, q } = await searchParamsPromise;
-    const normalizedQuery = q?.trim() ?? "";
-    const division = divisionSlug ? getProductDivision(divisionSlug) : undefined;
-
-    const items = await prisma.product
-      .findMany({
-        where: {
-          ...(division
-            ? {
-                category: {
-                  is: {
-                    OR: [{ slug: division.slug }, { name: division.catalogCategory }],
-                  },
-                },
-              }
-            : {}),
-          ...(normalizedQuery
-            ? {
-                OR: [
-                  { name: { contains: normalizedQuery } },
-                  { salts: { contains: normalizedQuery } },
-                  { manufacturer: { contains: normalizedQuery } },
-                  { category: { is: { name: { contains: normalizedQuery } } } },
-                ],
-              }
-            : {}),
-        },
-        orderBy: [{ isActive: "desc" }, { name: "asc" }],
-        select: {
-          id: true,
-          slug: true,
-          name: true,
-          salts: true,
-          manufacturer: true,
-          description: true,
-          imageUrl1: true,
-          imageUrl2: true,
-          imageUrl3: true,
-          isActive: true,
-          pricePaise: true,
-          priceSuffix: true,
-          category: {
-            select: {
-              id: true,
-              name: true,
-              slug: true,
-            },
-          },
-        },
-      })
-      .catch(() => []);
-
-    return { division, items, query: normalizedQuery };
-  } catch {
-    return null;
-  }
+function parsePage(value: string | undefined) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 1;
 }
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
@@ -103,17 +50,10 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
 }
 
 export default async function ProductsPage({ searchParams }: Props) {
-  const data = await getProductsPageData(searchParams);
-  if (!data) {
-    return (
-      <section className="mx-auto max-w-[1400px] px-4 py-16 md:px-6">
-        <h1 className="font-[family-name:var(--font-display)] text-4xl tracking-tight">Product catalog</h1>
-        <p className="mt-4 text-muted-foreground">The catalog is temporarily unavailable. Please try again shortly.</p>
-      </section>
-    );
-  }
-
-  const { division, items, query } = data;
+  const { division: divisionSlug, q, page: pageParam } = await searchParams;
+  const division = divisionSlug ? getProductDivision(divisionSlug) : undefined;
+  const query = q?.trim() ?? "";
+  const page = parsePage(pageParam);
 
   return (
     <>
@@ -170,7 +110,32 @@ export default async function ProductsPage({ searchParams }: Props) {
         </div>
       </section>
 
-        <ProductsContent items={items} division={division} initialQuery={query} />
-      </>
+      <Suspense key={`${division?.slug ?? "all"}-${query}-${page}`} fallback={<PageLoading title="Loading products" />}>
+        <ProductsResults divisionSlug={division?.slug} query={query} page={page} />
+      </Suspense>
+    </>
+  );
+}
+
+async function ProductsResults({ divisionSlug, query, page }: { divisionSlug?: string; query: string; page: number }) {
+  const data = await getCachedProductsPageData({ divisionSlug, query, page }).catch(() => null);
+  if (!data) {
+    return (
+      <section className="mx-auto max-w-[1400px] px-4 py-16 md:px-6">
+        <h2 className="font-[family-name:var(--font-display)] text-3xl tracking-tight">Product catalog</h2>
+        <p className="mt-4 text-muted-foreground">The catalog is temporarily unavailable. Please try again shortly.</p>
+      </section>
+    );
+  }
+
+  return (
+    <ProductsContent
+      items={data.items}
+      division={data.division}
+      initialQuery={data.query}
+      page={data.page}
+      totalCount={data.totalCount}
+      totalPages={data.totalPages}
+    />
   );
 }

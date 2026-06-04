@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/web/breadcrumbs";
 import { ImageCarousel } from "@/components/web/image-carousel";
@@ -21,14 +21,79 @@ import { cn } from "@/lib/utils";
 
 type Props = { params: Promise<{ slug: string }> };
 
-const getProductPageData = cache(async (slug: string) => {
+const productShelfSelect = {
+  id: true,
+  slug: true,
+  name: true,
+  categoryId: true,
+  manufacturer: true,
+  dosage: true,
+  salts: true,
+  description: true,
+  pricePaise: true,
+  priceSuffix: true,
+  imageUrl1: true,
+  imageUrl2: true,
+  imageUrl3: true,
+  category: {
+    select: {
+      name: true,
+      slug: true,
+    },
+  },
+  molecules: {
+    select: {
+      molecule: {
+        select: {
+          name: true,
+        },
+      },
+    },
+  },
+} as const;
+
+const getProductPageData = unstable_cache(async (slug: string) => {
   const product = await prisma.product.findUnique({
     where: { slug },
-    include: {
-      category: true,
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      categoryId: true,
+      manufacturer: true,
+      isActive: true,
+      pricePaise: true,
+      mrpPaise: true,
+      priceSuffix: true,
+      mrpSuffix: true,
+      dosage: true,
+      packSize: true,
+      salts: true,
+      description: true,
+      keyBenefits: true,
+      goodToKnow: true,
+      allergiesInformation: true,
+      directionForUse: true,
+      safetyInformation: true,
+      specialBenefitSchemes: true,
+      faqs: true,
+      imageUrl1: true,
+      imageUrl2: true,
+      imageUrl3: true,
+      category: {
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+        },
+      },
       molecules: {
-        include: {
-          molecule: true,
+        select: {
+          molecule: {
+            select: {
+              name: true,
+            },
+          },
         },
       },
     },
@@ -36,30 +101,70 @@ const getProductPageData = cache(async (slug: string) => {
 
   if (!product) return null;
 
-  const otherProducts = await prisma.product.findMany({
-    where: {
-      id: { not: product.id },
-      isActive: true,
-    },
-    include: {
-      category: true,
+  const productTokens = getProductMatchTokens(product);
+  const tokenFilters = Array.from(productTokens).slice(0, 8).flatMap((token) => [
+    { salts: { contains: token } },
+    {
       molecules: {
-        include: {
-          molecule: true,
+        some: {
+          molecule: {
+            name: { contains: token },
+          },
         },
       },
     },
-    orderBy: [{ name: "asc" }],
-  });
+  ]);
 
-  return { product, otherProducts };
-});
+  const [alternatives, relatedCategoryProducts, moreFromManufacturer] = await Promise.all([
+    tokenFilters.length > 0
+      ? prisma.product.findMany({
+          where: {
+            id: { not: product.id },
+            isActive: true,
+            OR: tokenFilters,
+          },
+          orderBy: [{ name: "asc" }],
+          take: 3,
+          select: productShelfSelect,
+        })
+      : Promise.resolve([]),
+    product.categoryId
+      ? prisma.product.findMany({
+          where: {
+            id: { not: product.id },
+            isActive: true,
+            categoryId: product.categoryId,
+          },
+          orderBy: [{ name: "asc" }],
+          take: 3,
+          select: productShelfSelect,
+        })
+      : Promise.resolve([]),
+    product.manufacturer
+      ? prisma.product.findMany({
+          where: {
+            id: { not: product.id },
+            isActive: true,
+            manufacturer: product.manufacturer,
+          },
+          orderBy: [{ name: "asc" }],
+          take: 3,
+          select: productShelfSelect,
+        })
+      : Promise.resolve([]),
+  ]);
 
-function getProductImageUrls(product: NonNullable<Awaited<ReturnType<typeof getProductPageData>>>["product"]) {
+  return { product, alternatives, relatedCategoryProducts, moreFromManufacturer };
+}, ["product-page-data"], { revalidate: 3600, tags: ["products"] });
+
+type ProductPageData = NonNullable<Awaited<ReturnType<typeof getProductPageData>>>;
+type ProductWithImages = Pick<ProductPageData["product"], "imageUrl1" | "imageUrl2" | "imageUrl3">;
+
+function getProductImageUrls(product: ProductWithImages) {
   return [product.imageUrl1, product.imageUrl2, product.imageUrl3].filter(Boolean) as string[];
 }
 
-function getProductMatchTokens(product: NonNullable<Awaited<ReturnType<typeof getProductPageData>>>["product"]) {
+function getProductMatchTokens(product: { salts: string | null; molecules: { molecule: { name: string } }[] }) {
   const tokens = new Set<string>();
 
   for (const salt of parseListText(product.salts)) {
@@ -79,7 +184,7 @@ function ProductShelfCard({
   product,
   eyebrow,
 }: {
-  product: NonNullable<Awaited<ReturnType<typeof getProductPageData>>>["otherProducts"][number];
+  product: ProductPageData["alternatives"][number];
   eyebrow?: string;
 }) {
   const imageSrc = getProductImageUrls(product)[0] ?? marketingImages.catalog;
@@ -204,7 +309,7 @@ export default async function ProductDetailPage({ params }: Props) {
     notFound();
   }
 
-  const { product, otherProducts } = data;
+  const { product, alternatives, relatedCategoryProducts, moreFromManufacturer } = data;
   const siteUrl = getSiteUrl();
   const pageUrl = `${siteUrl}/products/${product.slug}`;
   const imageUrls = getProductImageUrls(product);
@@ -213,28 +318,7 @@ export default async function ProductDetailPage({ params }: Props) {
   const specialSchemes = parseListText(product.specialBenefitSchemes);
   const faqs = parseFaqText(product.faqs);
   const faqSchemaItems = faqs.filter((faq) => faq.answer);
-  const productTokens = getProductMatchTokens(product);
   const productDivision = getProductDivisionForCategory(product.category);
-
-  const alternatives = otherProducts
-    .filter((candidate) => {
-      const candidateTokens = getProductMatchTokens(candidate);
-      return Array.from(candidateTokens).some((token) => productTokens.has(token));
-    })
-    .slice(0, 3);
-
-  const relatedCategoryProducts = otherProducts
-    .filter((candidate) => candidate.categoryId && candidate.categoryId === product.categoryId)
-    .slice(0, 3);
-
-  const moreFromManufacturer = otherProducts
-    .filter(
-      (candidate) =>
-        product.manufacturer &&
-        candidate.manufacturer &&
-        candidate.manufacturer.toLowerCase() === product.manufacturer.toLowerCase(),
-    )
-    .slice(0, 3);
 
   const savingsPercent =
     product.mrpPaise && product.mrpPaise > product.pricePaise

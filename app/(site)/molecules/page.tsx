@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { unstable_cache } from "next/cache";
 import { FadeIn } from "@/components/motion/fade-in";
 import { ManagedImage } from "@/components/web/managed-image";
 import { ContentPage } from "@/components/web/content-page";
@@ -61,9 +62,9 @@ const faqs = [
 
 export const revalidate = 3600;
 
-async function getMoleculesPageData() {
-  try {
-    return await prisma.molecule.findMany({
+const getMoleculesPageData = unstable_cache(
+  async () =>
+    prisma.molecule.findMany({
       where: { isPublished: true },
       orderBy: [{ updatedAt: "desc" }],
       take: 24,
@@ -75,14 +76,13 @@ async function getMoleculesPageData() {
         imageUrl: true,
         overview: true,
       },
-    });
-  } catch {
-    return null;
-  }
-}
+    }),
+  ["molecules-page-data"],
+  { revalidate: 3600, tags: ["molecules"] },
+);
 
 export default async function MoleculesPage() {
-  const molecules = await getMoleculesPageData();
+  const molecules = await getMoleculesPageData().catch(() => null);
   if (!molecules) {
     return (
       <ContentPage width="full" variant="frame">
