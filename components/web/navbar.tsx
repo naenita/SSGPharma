@@ -1,7 +1,9 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ChevronDown, Menu, X } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
@@ -10,11 +12,33 @@ import { cn } from "@/lib/utils";
 import { productDivisions, serviceLines } from "@/lib/divisions";
 
 export function Navbar() {
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [mobilePanel, setMobilePanel] = useState<null | "products" | "services">(null);
   const [desktopPanel, setDesktopPanel] = useState<null | "products" | "services">(null);
   const headerRef = useRef<HTMLElement | null>(null);
   const reduce = useReducedMotion();
+
+  const isActiveHref = (href: string) => {
+    if (href === "/") return pathname === "/";
+    return pathname === href || pathname.startsWith(`${href}/`);
+  };
+
+  const isActiveProducts = isActiveHref("/products") || pathname.startsWith("/divisions/");
+  const isActiveServices = isActiveHref("/services");
+  const activeMobilePanel = isActiveProducts ? "products" : isActiveServices ? "services" : null;
+
+  const mobileLinkClass = (active: boolean) =>
+    cn(
+      "rounded-lg px-3 py-3 text-sm font-medium transition-colors hover:bg-muted",
+      active && "border-l-2 border-primary bg-primary/10 pl-2.5 text-primary",
+    );
+
+  const mobileSubLinkClass = (active: boolean) =>
+    cn(
+      "py-2 pl-3 text-sm text-muted-foreground transition-colors hover:text-foreground",
+      active && "border-l-2 border-primary bg-primary/10 pl-2.5 font-medium text-primary",
+    );
 
   useEffect(() => {
     if (!open) return;
@@ -42,20 +66,20 @@ export function Navbar() {
       <nav className="mx-auto flex w-full max-w-[1400px] items-center justify-between gap-4 px-4 py-2 md:px-6 md:py-2.5 lg:px-8">
         <Link href="/" className="group flex shrink-0 items-center">
           <>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <Image
               src="/tlogo.png"
               alt="SSG Pharma Logo"
               width={112}
               height={37}
+              loading="eager"
               className="w-[104px] transition-opacity group-hover:opacity-80 sm:w-[112px] dark:hidden"
             />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <Image
               src="/tlogo-white.png"
               alt="SSG Pharma Logo"
               width={112}
               height={37}
+              loading="eager"
               className="hidden w-[104px] transition-opacity group-hover:opacity-80 sm:w-[112px] dark:block"
             />
           </>
@@ -229,8 +253,11 @@ export function Navbar() {
             aria-expanded={open}
             aria-label={open ? "Close menu" : "Open menu"}
             onClick={() => {
-              setOpen((v) => !v);
-              setMobilePanel(null);
+              setOpen((v) => {
+                const nextOpen = !v;
+                setMobilePanel(nextOpen ? activeMobilePanel : null);
+                return nextOpen;
+              });
             }}
           >
             {open ? <X className="size-4.5" /> : <Menu className="size-4.5" />}
@@ -248,14 +275,19 @@ export function Navbar() {
             transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
           >
             <div className="flex flex-col gap-1 px-4 pb-5 pt-1">
-              <Link href="/" className="rounded-lg px-3 py-3 text-sm font-medium hover:bg-muted" onClick={closeMobileMenu}>
+              <Link href="/" className={mobileLinkClass(pathname === "/")} onClick={closeMobileMenu}>
                 Home
               </Link>
-              <Link href="/about-us" className="rounded-lg px-3 py-3 text-sm font-medium hover:bg-muted" onClick={closeMobileMenu}>
+              <Link href="/about-us" className={mobileLinkClass(isActiveHref("/about-us"))} onClick={closeMobileMenu}>
                 About
               </Link>
 
-              <div className="rounded-lg transition-colors hover:bg-muted focus-within:bg-muted">
+              <div
+                className={cn(
+                  "rounded-lg transition-colors hover:bg-muted focus-within:bg-muted",
+                  isActiveProducts && "border-l-2 border-primary bg-primary/10 text-primary",
+                )}
+              >
                 <div className="flex items-center">
                   <Link href="/products" className="flex-1 px-3 py-3 text-sm font-medium" onClick={closeMobileMenu}>
                     Products
@@ -277,19 +309,24 @@ export function Navbar() {
                     <Link
                       key={d.slug}
                       href={`/divisions/${d.slug}`}
-                      className="py-2 text-sm text-muted-foreground hover:text-foreground"
+                      className={mobileSubLinkClass(pathname === `/divisions/${d.slug}`)}
                       onClick={closeMobileMenu}
                     >
                       {d.title}
                     </Link>
                   ))}
-                  <Link href="/products" className="py-2 text-sm font-medium text-primary" onClick={closeMobileMenu}>
+                  <Link href="/products" className={mobileSubLinkClass(pathname === "/products")} onClick={closeMobileMenu}>
                     All products →
                   </Link>
                 </div>
               )}
 
-              <div className="rounded-lg transition-colors hover:bg-muted focus-within:bg-muted">
+              <div
+                className={cn(
+                  "rounded-lg transition-colors hover:bg-muted focus-within:bg-muted",
+                  isActiveServices && "border-l-2 border-primary bg-primary/10 text-primary",
+                )}
+              >
                 <div className="flex items-center">
                   <Link href="/services" className="flex-1 px-3 py-3 text-sm font-medium" onClick={closeMobileMenu}>
                     Services
@@ -311,24 +348,24 @@ export function Navbar() {
                     <Link
                       key={s.slug}
                       href={s.href}
-                      className="py-2 text-sm text-muted-foreground hover:text-foreground"
+                      className={mobileSubLinkClass(pathname === s.href)}
                       onClick={closeMobileMenu}
                     >
                       {s.title}
                     </Link>
                   ))}
-                  <Link href="/services" className="py-2 text-sm font-medium text-primary" onClick={closeMobileMenu}>
+                  <Link href="/services" className={mobileSubLinkClass(pathname === "/services")} onClick={closeMobileMenu}>
                     Overview →
                   </Link>
                 </div>
               )}
 
-              <Link href="/molecules" className="rounded-lg px-3 py-3 text-sm font-medium hover:bg-muted" onClick={closeMobileMenu}>
+              <Link href="/molecules" className={mobileLinkClass(isActiveHref("/molecules"))} onClick={closeMobileMenu}>
                 Molecules
               </Link>
               <Link
                 href="/patient-assistance-programs"
-                className="rounded-lg px-3 py-3 text-sm font-medium hover:bg-muted"
+                className={mobileLinkClass(isActiveHref("/patient-assistance-programs"))}
                 onClick={closeMobileMenu}
               >
                 Assistance
